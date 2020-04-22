@@ -25,12 +25,13 @@ export default class App extends Vue {
         height: 600,
         type: Phaser.AUTO,
         parent: 'content',
+        //characters chosen before this should be injected into the scene
         scene: [GameScene],
         physics: {
           default: 'arcade',
           arcade: {
               gravity: { y: 800 },
-              debug: false
+              debug: true
           }
         },
         backgroundColor: "#4D7980"

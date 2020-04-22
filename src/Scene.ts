@@ -1,136 +1,248 @@
 import "phaser";
+import { Player } from './Player';
+import { CharacterService } from './service/CharacterService';
 export class GameScene extends Phaser.Scene {
 
 
-  sprite: any
+  player1: Phaser.GameObjects.Container
+  dummy: Phaser.GameObjects.Sprite
+  // sprite: Phaser.GameObjects.Sprite
+  // hitboxes: Phaser.Physics.Arcade.Group
   cursors: any
+  keys: any
+
+  _characterService: CharacterService
 
   constructor() {
     super({
       key: "GameScene"
     });
+
+    this._characterService = new CharacterService(this)
   }
 
-  init(params): void {
-
+  get characterService(): CharacterService {
+    return this._characterService
   }
 
-  preload(): void {
-    const ground = require('./assets/ground-1.png')
-    const c1idleRight = require('./assets/character1-idle-right.png')
-    const c1idleLeft = require('./assets/character1-idle-left.png')
-    const c1walkingRight = require('./assets/character1-walking-right.png')
-    const c1walkingLeft = require('./assets/character1-walking-left.png')
-    this.load.image("ground1", ground);
-    this.load.spritesheet("character1-idle-right", c1idleRight, {frameWidth: 272, frameHeight: 272} );
-    this.load.spritesheet("character1-idle-left", c1idleLeft, {frameWidth: 272, frameHeight: 272} );
-    this.load.spritesheet("character1-walking-right", c1walkingRight, {frameWidth: 272, frameHeight: 272} );
-    this.load.spritesheet("character1-walking-left", c1walkingLeft, {frameWidth: 272, frameHeight: 272} );
+  init(): void {
+  }
+
+  preload(): void { 
+    this.load.image("ground1", require('./assets/ground-1.png'))
+    this.load.image("ground2", require('./assets/ground-2.png'))
+    this.load.image("platform-ground", require('./assets/platform-ground.png'));
+    this.load.spritesheet("character1-idle-right", require('./assets/character1-idle-right.png'), {frameWidth: 272, frameHeight: 272} )
+    this.load.spritesheet("character1-idle-left", require('./assets/character1-idle-left.png'), {frameWidth: 272, frameHeight: 272} )
+    this.load.spritesheet("character1-walking-right", require('./assets/character1-walking-right.png'), {frameWidth: 272, frameHeight: 272} )
+    this.load.spritesheet("character1-walking-left", require('./assets/character1-walking-left.png'), {frameWidth: 272, frameHeight: 272} )
+    this.load.spritesheet("character1-attack1-right", require('./assets/character1-attack1-right.png'), {frameWidth: 544, frameHeight: 544} )
+    this.load.spritesheet("character1-attack1-left", require('./assets/character1-attack1-left.png'), {frameWidth: 544, frameHeight: 544} )
   }
 
   create(): void {
-    //  The platforms group contains the ground and the 2 ledges we can jump on
-    const platforms = this.physics.add.staticGroup();
 
-    //  Here we create the ground.
-    //  Scale it to fit the width of the game (the original sprite is 400x32 in size)
-    // platforms.create(700, 568, 'ground1').refreshBody();
+    const platforms = this.addPlatforms()
 
-    const ground = this.physics.add.sprite(700, 568, 'ground1');
+    this.addBackground()
 
+    this.createAnimations()
 
-    // game.physics.enable([sprite1,sprite2], Phaser.Physics.ARCADE);
+    this.player1 = this.characterService.character1(400, 300)
 
-    //  This adjusts the collision body size to be a 100x50 box.
-    //  50, 25 is the X and Y offset of the newly sized box.
+    // this.player1.setSize(90, 150);
+    // this.physics.world.enable(this.player1)
+
+    // this.player1.body.setBounce(0.2);
+    // this.player1.body.setCollideWorldBounds(true);
+    // console.log(this.player1)
+    // this.player1.body.useDamping = true
+    // this.player1.body.setDragX(0.96)
+    // this.sprite = this.add.sprite(0, 0, 'character1')
+    // this.sprite.play('character1-idle-right');
+    // this.sprite.setX(-40)
+    // this.sprite.setY(20)
+
+    // this.sprite.setBounce(0.2);
+    // this.sprite.setCollideWorldBounds(true);
+    // this.sprite.body.setSize(90, 150);
+    // this.sprite.body.setOffset(140, 40);
+    // this.sprite.setDamping(true)
+    // this.sprite.setDragX(0.98)
+
+    // this.player1.add(this.sprite)
+
+    // this.hitboxes = this.physics.add.group({
+    //   // immovable: true,
+    //   allowGravity: false
+    // })
+
+    // let hitbox1 = this.hitboxes.create(0, 0)
+    // hitbox1.name = "punch";     
+    // hitbox1.damage = 50;     
+    // hitbox1.knockbackDirection = 0.5;     
+    // hitbox1.knockbackAmt = 600;
+    // hitbox1.body.setSize(200, 100)
+    // hitbox1.body.setOffset(50, -40);
     
-    ground.body.setSize(1400,20);
-    ground.body.setOffset(0, 60);
-    ground.body.immovable = true;
-    ground.setCollideWorldBounds(true);
+    // this.player1.add(this.hitboxes.getChildren())
+    // hitbox1.body.enable = false
 
 
-    //  Now let's create some ledges
-    // platforms.create(600, 400, 'ground');
-    // platforms.create(50, 250, 'ground');
-    // platforms.create(750, 220, 'ground');
-    var config = {
-      key: 'character1-idle-right',
-      frames: this.anims.generateFrameNumbers('character1-idle-right', { start: 0, end: 15, first: 15 }),
-      frameRate: 12,
-      repeat: -1
-    };
-    var config2 = {
-      key: 'character1-walking-right',
-      frames: this.anims.generateFrameNumbers('character1-walking-right', { start: 0, end: 5, first: 5 }),
-      frameRate: 14,
-      repeat: -1
-    };
-    var config3 = {
-      key: 'character1-idle-left',
-      frames: this.anims.generateFrameNumbers('character1-idle-left', { start: 0, end: 15, first: 15 }),
-      frameRate: 12,
-      repeat: -1
-    };
-    var config4 = {
-      key: 'character1-walking-left',
-      frames: this.anims.generateFrameNumbers('character1-walking-left', { start: 0, end: 5, first: 5 }),
-      frameRate: 14,
-      repeat: -1
-    };
-    this.anims.create(config)
-    this.anims.create(config2)
-    this.anims.create(config3)
-    this.anims.create(config4)
-    
-
-    this.sprite = this.physics.add.sprite(400, 300, 'character1')
-    this.sprite.play('character1-idle-right');
-
-    this.sprite.setBounce(0.2);
-    this.sprite.setCollideWorldBounds(true);
-    this.sprite.body.setSize(90, 150);
-    this.sprite.body.setOffset(140, 40);
     this.cursors = this.input.keyboard.createCursorKeys();
+    this.keys = this.input.keyboard.addKeys({'attack1': Phaser.Input.Keyboard.KeyCodes.SHIFT})
 
-    this.physics.add.collider(this.sprite, ground);
+    // this.dummy = this.physics.add.sprite(400, 200, 'dummy')
+    // this.dummy.play('character1-idle-right');
+    // this.dummy.body.setSize(90, 150);
+    // this.dummy.body.setOffset(140, 40);
+
+    // this.physics.add.collider(this.sprite, platforms);
+    this.physics.add.collider(this.player1, platforms);
+    // this.physics.add.collider(this.dummy, platforms);
+    // this.physics.add.overlap(hitbox1, this.dummy, this.dummyHit, undefined, this);
+
+    // this.sprite.on('animationcomplete', (anim, frame)=>{
+    //   if(anim.key == 'character1-attack1-right') {
+    //     this.hitboxes.getChildren().forEach((ch)=>{
+    //       ch.body.enable = false
+    //     })
+    //     this.attacking = false
+    //     this.sprite.play('character1-idle-right', true);
+    //     // this.sprite.body.setOffset(20, 40);
+    //   } else if(anim.key == 'character1-attack1-left') {
+    //     this.hitboxes.getChildren().forEach((ch)=>{
+    //       ch.body.enable = false
+    //     })
+    //     this.attacking = false
+    //     this.sprite.play('character1-idle-left', true);
+    //     // this.sprite.body.setOffset(20, 40);
+    //   }
+    // })
   }
 
+  addPlatforms() {
+    const platforms = this.physics.add.staticGroup();
+    platforms.create(700, 380, 'platform-ground').refreshBody();
+
+    return platforms
+  }
+
+  addBackground() {
+    const ground = this.physics.add.sprite(700, 568, 'ground2');
+    ground.body.immovable = true;
+    ground.setCollideWorldBounds(true);
+  }
+
+  createAnimations() {
+    // const animations =[
+    //   {
+    //     key: 'character1-idle-right',
+    //     frames: this.anims.generateFrameNumbers('character1-idle-right', { start: 0, end: 15, first: 15 }),
+    //     frameRate: 12,
+    //     repeat: -1
+    //   },
+    //   {
+    //     key: 'character1-walking-right',
+    //     frames: this.anims.generateFrameNumbers('character1-walking-right', { start: 0, end: 5, first: 5 }),
+    //     frameRate: 14,
+    //     repeat: -1
+    //   },
+    //   {
+    //     key: 'character1-idle-left',
+    //     frames: this.anims.generateFrameNumbers('character1-idle-left', { start: 0, end: 15, first: 15 }),
+    //     frameRate: 12,
+    //     repeat: -1
+    //   },
+    //   {
+    //     key: 'character1-walking-left',
+    //     frames: this.anims.generateFrameNumbers('character1-walking-left', { start: 0, end: 5, first: 5 }),
+    //     frameRate: 14,
+    //     repeat: -1
+    //   },
+    //   {
+    //     key: 'character1-attack1-right',
+    //     frames: this.anims.generateFrameNumbers('character1-attack1-right', { start: 0, end: 23, first: 23 }),
+    //     frameRate: 18,
+    //     repeat: 0
+    //   },
+    //   {
+    //     key: 'character1-attack1-left',
+    //     frames: this.anims.generateFrameNumbers('character1-attack1-left', { start: 0, end: 23, first: 23 }),
+    //     frameRate: 18,
+    //     repeat: 0
+    //   }
+    // ] 
+
+    // animations.forEach((an) => {
+    //   this.anims.create(an)
+    // })
+  }
+
+  dummyHit() {
+    console.log('dummy has been hit!')
+  }
 
   lastDirection: string = 'right'
+  attacking: boolean = false
   update(time: number): void {
+    // this.sprite.setVelocityX(0);
+    // if(!this.attacking) {
+    //   if (this.cursors.left.isDown)
+    //   {
+    //     this.player1.body.setVelocityX(-480);
+    //     this.sprite.play('character1-walking-left', true);
+    //     this.lastDirection = 'left'
+    //     // this.sprite.body.setOffset(20, 40);
+    //   }
+    //   else if (this.cursors.right.isDown)
+    //   {
+    //     this.player1.body.setVelocityX(480);
+    //     this.sprite.play('character1-walking-right', true);
+    //     this.lastDirection = 'right'
+    //     // this.sprite.body.setOffset(140, 40);
+    //   }
+    //   else
+    //   {
+    //     if(this.lastDirection == 'right') {
+    //       this.sprite.play('character1-idle-right', true);
+    //       // this.sprite.body.setOffset(140, 40);
+    //     } else {
+    //       this.sprite.play('character1-idle-left', true);
+    //       // this.sprite.body.setOffset(20, 40);
+    //     }
+  
+    //   }
+    // }
 
-    if (this.cursors.left.isDown)
-    {
-        this.sprite.setVelocityX(-480);
-        this.sprite.play('character1-walking-left', true);
-        this.lastDirection = 'left'
-        this.sprite.body.setOffset(20, 40);
-    }
-    else if (this.cursors.right.isDown)
-    {
-        this.sprite.setVelocityX(480);
-        this.sprite.play('character1-walking-right', true);
-        this.lastDirection = 'right'
-        this.sprite.body.setOffset(140, 40);
-      }
-    else
-    {
-        this.sprite.setVelocityX(0);
-        if(this.lastDirection == 'right') {
-          this.sprite.play('character1-idle-right', true);
-          this.sprite.body.setOffset(140, 40);
-        } else {
-          this.sprite.play('character1-idle-left', true);
-          this.sprite.body.setOffset(20, 40);
-        }
+    // if (this.cursors.up.isDown && this.player1.body.touching.down)
+    // {
+    //   this.player1.body.setVelocityY(-760);
+    // }
 
-    }
+    // if (Phaser.Input.Keyboard.JustDown(this.keys.attack1))
+    // {
+    //   for(var i = 0; i < this.hitboxes.getChildren().length; i++){  
+    //     console.log('going through children')        
+    //     // if we find the hitbox with the "name" specified          
+    //     if(this.hitboxes.getChildren()[i].name === 'punch'){               
+    //     console.log('found child')        
+    //     // reset it               
+    //       this.hitboxes.getChildren()[i].body.enable = true;          
+    //     }     
+    //   }
+    //   this.attacking = true
+    //   if(this.lastDirection == 'right') {
+    //     this.sprite.play('character1-attack1-right',false);
+    //     // this.sprite.body.setOffset(280, 176);
+        
+    //   } else {
+    //     this.sprite.play('character1-attack1-left',false);
+    //     // this.sprite.body.setOffset(156, 176);
+    //   }
+    // }
 
-    if (this.cursors.up.isDown )
-    {
-        this.sprite.setVelocityY(-760);
-    }
+   
   }
 
 };
