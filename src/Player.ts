@@ -4,6 +4,7 @@ export class Player extends Phaser.GameObjects.Container {
   private sprite: Phaser.GameObjects.Sprite
   private hitboxes: Phaser.Physics.Arcade.Group
   private attacking: boolean = false
+  private lastDirection: string = 'right'
   constructor(
     public readonly scene: Phaser.Scene,
     public readonly x: integer,
@@ -29,14 +30,15 @@ export class Player extends Phaser.GameObjects.Container {
     this.setSize(this.character.sizeX, this.character.sizeY);
     this.scene.physics.world.enable(this)
 
-    this.playerBody.setBounce(0.2, 0.2);
+    this.playerBody.setBounce(this.character.bounce, this.character.bounce);
     this.playerBody.setCollideWorldBounds(true);
     this.playerBody.useDamping = true
-    this.playerBody.setDragX(0.96)
+    this.playerBody.setDragX(this.character.dragX)
 
     this.add(this.sprite)
+    this.addHitbox()
 
-    this.idleRight()
+    this.idle('right')
 
     this.sprite.on('animationcomplete', (anim, frame)=>{
       if(anim.key == 'character1-attack1-right') {
@@ -44,27 +46,68 @@ export class Player extends Phaser.GameObjects.Container {
           ch.body.enable = false
         })
         this.attacking = false
-        this.sprite.play('character1-idle-right', true);
-        // this.sprite.body.setOffset(20, 40);
+        this.idle('right')
       } else if(anim.key == 'character1-attack1-left') {
         this.hitboxes.getChildren().forEach((ch)=>{
           ch.body.enable = false
         })
         this.attacking = false
-        this.sprite.play('character1-idle-left', true);
-        // this.sprite.body.setOffset(20, 40);
+        this.idle('left')
       }
     })
   }
 
-  idleRight() {
-    const key = this.character.key + '-idle-right'
-    this.sprite.play(key)
+  public get isAttacking(): boolean {
+    return this.attacking
+  }
+
+  stopMoving() {
+    this.playerBody.setVelocity(0)
+  }
+
+  idle(direction: string = this.lastDirection) {
+    const key = this.character.key + '-idle-' + direction
+    this.playAnimation(key)
+  }
+
+  move(direction: string) {
+    this.lastDirection = direction
+    const key = this.character.key + '-walking-' + direction
+    this.playAnimation(key)
+    if(direction == 'left') {
+      this.playerBody.setVelocityX(-this.character.properties.moveVelocity)
+    } else if (direction == 'right') {
+      this.playerBody.setVelocityX(this.character.properties.moveVelocity)
+    }
+  }
+
+  attack(direction: string = this.lastDirection) {
+    this.attacking = true
+    for(var i = 0; i < this.hitboxes.getChildren().length; i++){  
+      // if we find the hitbox with the "name" specified          
+      if(this.hitboxes.getChildren()[i].name === 'punch'){               
+        // reset it       
+        if(direction == 'left') {
+          (this.hitboxes.getChildren()[i].body as Phaser.Physics.Arcade.Body).setOffset(-220, -40)
+        } else {
+          (this.hitboxes.getChildren()[i].body as Phaser.Physics.Arcade.Body).setOffset(50, -40)
+
+        }       
+        (this.hitboxes.getChildren()[i].body as Phaser.Physics.Arcade.Body).enable = true;          
+      }     
+    }
+
+    const key = this.character.key + '-attack1-' + direction
+    this.playAnimation(key, false)
+  }
+
+  playAnimation(key: string, ignoreIfPlaying: boolean = true) {
+    this.sprite.play(key, ignoreIfPlaying)
     const action = this.character.actions.find((a) => a.animation.key === key)
-    console.log(action)
     this.sprite.setX(action ? action.bodyOffset[0] : 0)
     this.sprite.setY(action ? action.bodyOffset[1] : 0)
   }
+
 
   addHitbox() {
     let hitbox1 = this.hitboxes.create(0, 0)
@@ -77,8 +120,6 @@ export class Player extends Phaser.GameObjects.Container {
     
     this.add(this.hitboxes.getChildren())
     hitbox1.body.enable = false
-    // this.physics.add.overlap(hitbox1, this.dummy, this.dummyHit, undefined, this);
 
   }
-      // frames: this.anims.generateFrameNumbers('character1-attack1-left', { start: 0, end: 23, first: 23 }),
 } 

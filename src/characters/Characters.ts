@@ -36,7 +36,9 @@ export namespace Character{
     constructor(
       public readonly size: [integer, integer],
       public readonly bounce: integer,
-      public readonly dragX: integer
+      public readonly dragX: integer,
+      public readonly moveVelocity: integer,
+      public readonly jumpVelocity: integer
     ) {}
   }
   
